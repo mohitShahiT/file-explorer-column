@@ -5,16 +5,20 @@ import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io";
 import { File, Folder, FileKinds } from "./types/FileTypes";
 import { nanoid } from "nanoid";
 
-//TODO: BFS for finding the folder or file with given id
-function getFileFolderFromID(root: Folder, id: string): File | Folder | null {
-  if (root.id === id) return root;
-  const queue = [];
-  const visitedIDs = [];
+//BFS for finding the folder or file with given id
+// takes in folder and id as parameters returns either File, Folder on null if matching id not founds
+function getFileFolderFromID(root: Folder, id: string): (File | Folder | null) {
+  const queue:(File | Folder)[] = [];
   queue.push(root);
   while (queue.length > 0) {
     const current = queue.shift();
-    visitedIDs.push(current?.id);
+    console.log(current?.name)
+    if(current?.id === id) return current;
+    if(current && 'children' in current) {
+      queue.push(...current.children)
+    }
   }
+  return null
 }
 
 const ID_SIZE = 7;
@@ -22,20 +26,23 @@ const root: Folder = {
   id: nanoid(ID_SIZE),
   kind: "folder",
   name: "root",
+  createdAt: Date.now(),
   children: [
     {
       id: nanoid(ID_SIZE),
       kind: "folder",
       name: "Documents",
+      createdAt: Date.now(),
       children: [
         {
           id: nanoid(ID_SIZE),
           kind: "folder",
           name: "Projects",
+          createdAt: Date.now(),
           children: [],
         },
         {
-          id: nanoid(ID_SIZE),
+          id: "mohit",
           kind: FileKinds.Document,
           name: "budget.xlsx",
           size: 128,
@@ -54,12 +61,14 @@ const root: Folder = {
       id: nanoid(ID_SIZE),
       kind: "folder",
       name: "Downloads",
+      createdAt: Date.now(),
       children: [],
     },
     {
       id: nanoid(ID_SIZE),
       kind: "folder",
       name: "Pictures",
+      createdAt: Date.now(),
       children: [],
     },
     {
@@ -79,7 +88,7 @@ const root: Folder = {
   ],
 };
 function App() {
-  console.log({ root });
+  console.log(getFileFolderFromID(root, "mohit"))
   return (
     <>
       <div>

@@ -18,5 +18,6 @@ export interface Folder {
     name: string,
     kind: "folder",
     children: Array<File | Folder>,
-    size?:number
+    size?:number,
+    createdAt: number
 }
