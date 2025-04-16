@@ -7,7 +7,7 @@ import {
   useState,
   useMemo,
 } from "react";
-import { Folder } from "../types/FileTypes";
+import { Folder, File } from "../types/FileTypes";
 import { getFileFolderFromID } from "../utils";
 import { root } from "../FileTree";
 interface fileContextInterface {
@@ -28,7 +28,7 @@ export function FileContextProvider({ children }: { children: ReactNode }) {
 
   const activeFolder = useMemo(
     () => getFileFolderFromID(root, activeFolderId),
-    [root, activeFolderId]
+    [activeFolderId]
   );
 
   function handleActiveChange(id: string) {
@@ -52,10 +52,10 @@ export function FileContextProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useFileContex() {
+export function useFileContext() {
   const context = useContext(FileContext);
   if (context === null) {
-    return new Error("File Context used outside the context provider");
+    throw new Error("File Context used outside the context provider");
   }
   return context;
 }

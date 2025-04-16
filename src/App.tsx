@@ -3,41 +3,28 @@ import { FaFolder } from "react-icons/fa6";
 import { FaFile } from "react-icons/fa";
 import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io";
 import { File, Folder, FileKinds } from "./types/FileTypes";
-import { root } from "./FileTree";
-import { useState, useMemo } from "react";
-import { getFileFolderFromID } from "./utils";
+import { useFileContext } from "./contexts/FolderContext";
 
 function App() {
   return (
     <>
       <div>
-        <FileExplorer root={root} />
+        <FileExplorer />
       </div>
     </>
   );
 }
 
-function FileExplorer({ root }: { root: Folder }) {
-  const [currentFolderIds, setCurrentFolderIds] = useState<string[]>([root.id]);
-  const [activeFolderId, setActiveFolderId] = useState<string>(root.id);
-
-  const activeFolder = useMemo(
-    () => getFileFolderFromID(root, activeFolderId),
-    [root, activeFolderId]
-  );
-
-  function handleActiveChange(id: string) {
-    setActiveFolderId(id);
-  }
-
+function FileExplorer() {
+  const { root, activeFolder } = useFileContext();
   return (
     <>
       <div className="p-2 ">
         <Title title={activeFolder ? activeFolder.name : ""} />
         <div className="flex">
-          <FileColumn folder={root} onClick={handleActiveChange} />
-          <FileColumn onClick={() => {}} />
-          <FileColumn onClick={() => {}} />
+          <FileColumn folder={root} />
+          <FileColumn />
+          <FileColumn />
         </div>
       </div>
     </>
@@ -55,22 +42,17 @@ function Title({ title }: { title: string }) {
   );
 }
 
-function FileColumn({
-  folder,
-  onClick,
-}: {
-  folder?: Folder;
-  onClick: (id: string) => void;
-}) {
+function FileColumn({ folder }: { folder?: Folder }) {
+  const { handleActiveChange } = useFileContext();
   return (
     <div
       className="border-r-[1px] border-r-blue-400/25 h-screen w-72"
-      onClick={() => folder && onClick(folder.id)}
+      onClick={() => folder && handleActiveChange(folder.id)}
     >
       {folder && (
         <>
           <FileColumnHeader header={folder.name} />
-          <FileLists files={folder.children} onClick={onClick} />
+          <FileLists files={folder.children} />
         </>
       )}
     </div>
@@ -90,38 +72,29 @@ function FileColumnHeader({ header }: { header: string }) {
   );
 }
 
-function FileLists({
-  files,
-  onClick,
-}: {
-  files: (File | Folder)[];
-  onClick: (id: string) => void;
-}) {
+function FileLists({ files }: { files: (File | Folder)[] }) {
   return (
     <div className="p-0.5">
       <ul className="flex flex-col gap-1">
         {files.map((file) => (
-          <FileItem key={file.id} file={file} onClick={onClick} />
+          <FileItem key={file.id} file={file} />
         ))}
       </ul>
     </div>
   );
 }
 
-function FileItem({
-  file,
-  onClick,
-}: {
-  file: File | Folder;
-  onClick: (id: string) => void;
-}) {
+function FileItem({ file }: { file: File | Folder }) {
+  const { activeFolderId, handleActiveChange } = useFileContext();
   return (
     <li
       onClick={(e) => {
         e.stopPropagation();
-        onClick(file.id);
+        handleActiveChange(file.id);
       }}
-      className={`hover:bg-blue-600 py-1 flex justify-between items-center px-3 cursor-pointer rounded-sm`}
+      className={`hover:bg-blue-600 py-1 flex justify-between items-center px-3 cursor-pointer rounded-sm ${
+        activeFolderId === file.id && "bg-blue-600"
+      }`}
     >
       <span className="flex items-center gap-2 ">
         {file.kind === FileKinds.Folder ? <FaFolder /> : <FaFile />}
