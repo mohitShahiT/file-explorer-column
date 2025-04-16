@@ -1,112 +1,43 @@
-import './App.css'
+import "./App.css";
 import { FaFolder } from "react-icons/fa6";
 import { FaFile } from "react-icons/fa";
 import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io";
 import { File, Folder, FileKinds } from "./types/FileTypes";
-import { nanoid } from "nanoid";
+import { root } from "./FileTree";
+import { useState, useMemo } from "react";
+import { getFileFolderFromID } from "./utils";
 
-//BFS for finding the folder or file with given id
-// takes in folder and id as parameters returns either File, Folder on null if matching id not founds
-function getFileFolderFromID(root: Folder, id: string): (File | Folder | null) {
-  const queue:(File | Folder)[] = [];
-  queue.push(root);
-  while (queue.length > 0) {
-    const current = queue.shift();
-    console.log(current?.name)
-    if(current?.id === id) return current;
-    if(current && 'children' in current) {
-      queue.push(...current.children)
-    }
-  }
-  return null
-}
-
-const ID_SIZE = 7;
-const root: Folder = {
-  id: nanoid(ID_SIZE),
-  kind: "folder",
-  name: "root",
-  createdAt: Date.now(),
-  children: [
-    {
-      id: nanoid(ID_SIZE),
-      kind: "folder",
-      name: "Documents",
-      createdAt: Date.now(),
-      children: [
-        {
-          id: nanoid(ID_SIZE),
-          kind: "folder",
-          name: "Projects",
-          createdAt: Date.now(),
-          children: [],
-        },
-        {
-          id: "mohit",
-          kind: FileKinds.Document,
-          name: "budget.xlsx",
-          size: 128,
-          createdAt: Date.now(),
-        },
-        {
-          id: nanoid(ID_SIZE),
-          kind: FileKinds.Document,
-          name: "resume.docx",
-          size: 32,
-          createdAt: Date.now(),
-        },
-      ],
-    },
-    {
-      id: nanoid(ID_SIZE),
-      kind: "folder",
-      name: "Downloads",
-      createdAt: Date.now(),
-      children: [],
-    },
-    {
-      id: nanoid(ID_SIZE),
-      kind: "folder",
-      name: "Pictures",
-      createdAt: Date.now(),
-      children: [],
-    },
-    {
-      id: nanoid(ID_SIZE),
-      kind: FileKinds.Document,
-      name: "notes.txt",
-      size: 10,
-      createdAt: Date.now(),
-    },
-    {
-      id: nanoid(ID_SIZE),
-      kind: FileKinds.PDF,
-      name: "resume.pdf",
-      size: 50,
-      createdAt: Date.now(),
-    },
-  ],
-};
 function App() {
-  console.log(getFileFolderFromID(root, "mohit"))
   return (
     <>
       <div>
-        <FileExplorer />
+        <FileExplorer root={root} />
       </div>
     </>
   );
 }
 
-function FileExplorer() {
+function FileExplorer({ root }: { root: Folder }) {
+  const [currentFolderIds, setCurrentFolderIds] = useState<string[]>([root.id]);
+  const [activeFolderId, setActiveFolderId] = useState<string>(root.id);
+
+  const activeFolder = useMemo(
+    () => getFileFolderFromID(root, activeFolderId),
+    [root, activeFolderId]
+  );
+
+  function handleActiveChange(id: string) {
+    setActiveFolderId(id);
+  }
+
   return (
     <>
       <div className="p-2 ">
-        <Title title={root.name} />
+        <Title title={activeFolder ? activeFolder.name : ""} />
         <div className="flex">
-          <FileColumn folder={root} />
-          {/* <FileColumn />
-          <FileColumn /> */}
+          <FileColumn folder={root} onClick={handleActiveChange} />
+          <FileColumn onClick={() => {}} />
+          <FileColumn onClick={() => {}} />
         </div>
       </div>
     </>
@@ -124,11 +55,24 @@ function Title({ title }: { title: string }) {
   );
 }
 
-function FileColumn({ folder }: { folder: Folder }) {
+function FileColumn({
+  folder,
+  onClick,
+}: {
+  folder?: Folder;
+  onClick: (id: string) => void;
+}) {
   return (
-    <div className="border-r-[1px] border-r-blue-400/25 h-screen w-72">
-      <FileColumnHeader header={folder.name} />
-      <FileLists files={folder.children} />
+    <div
+      className="border-r-[1px] border-r-blue-400/25 h-screen w-72"
+      onClick={() => folder && onClick(folder.id)}
+    >
+      {folder && (
+        <>
+          <FileColumnHeader header={folder.name} />
+          <FileLists files={folder.children} onClick={onClick} />
+        </>
+      )}
     </div>
   );
 }
@@ -146,32 +90,50 @@ function FileColumnHeader({ header }: { header: string }) {
   );
 }
 
-function FileLists({ files }: { files: (File | Folder)[] }) {
+function FileLists({
+  files,
+  onClick,
+}: {
+  files: (File | Folder)[];
+  onClick: (id: string) => void;
+}) {
   return (
     <div className="p-0.5">
       <ul className="flex flex-col gap-1">
         {files.map((file) => (
-          <FileItem key={file.id} file={file} />
+          <FileItem key={file.id} file={file} onClick={onClick} />
         ))}
       </ul>
     </div>
   );
 }
 
-function FileItem({ file }: { file: File | Folder }) {
+function FileItem({
+  file,
+  onClick,
+}: {
+  file: File | Folder;
+  onClick: (id: string) => void;
+}) {
   return (
-    <li className="hover:bg-blue-600 py-1 flex justify-between items-center px-3 cursor-pointer rounded-sm">
+    <li
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick(file.id);
+      }}
+      className={`hover:bg-blue-600 py-1 flex justify-between items-center px-3 cursor-pointer rounded-sm`}
+    >
       <span className="flex items-center gap-2 ">
-        {file.kind === "folder" ? <FaFolder /> : <FaFile />}
+        {file.kind === FileKinds.Folder ? <FaFolder /> : <FaFile />}
 
         {file.name}
       </span>
-      <IoIosArrowForward />
+      {file.kind === FileKinds.Folder && <IoIosArrowForward />}
     </li>
   );
 }
 
-export default App
+export default App;
 
 /*
 [
