@@ -1,5 +1,4 @@
 import { Folder, FileKinds } from "./types/FileTypes";
-import { getDepthFromID } from "./utils";
 // import { nanoid } from "nanoid";
 
 // const ID_SIZE = 7;

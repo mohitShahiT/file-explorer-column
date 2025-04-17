@@ -10,10 +10,9 @@ export enum FileKinds {
 }
 
 export interface FileFolderBase {
-    id: string,
-    name: string,
-
-    createdAt: number
+  id: string;
+  name: string;
+  createdAt: number;
 }
 
 export interface File extends FileFolderBase {

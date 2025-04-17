@@ -4,7 +4,7 @@ import { FaFile } from "react-icons/fa";
 import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io";
 import { File, Folder, FileKinds } from "./types/FileTypes";
 import { useFileContext } from "./contexts/FolderContext";
-import { getDepthFromID, getFileFolderFromID, getPathFromID } from "./utils";
+import { getDepthFromID, getFileFolderFromID } from "./utils";
 import { SyntheticEvent } from "react";
 
 function App() {
@@ -24,7 +24,7 @@ function FileExplorer() {
     <>
       <div className="p-2 ">
         <Title title={activeFolder ? activeFolder.name : ""} />
-        <div className="flex">
+        <div className="flex overflow-scroll">
           {openFolderIds.map((id) => (
             <FolderColumn key={id} id={id} />
           ))}
@@ -36,9 +36,27 @@ function FileExplorer() {
 }
 
 function Title({ title }: { title: string }) {
+  const {
+    root,
+    openFolderIds,
+    setOpenFolderIds,
+    activeFolder,
+    setActiveFolderId,
+  } = useFileContext();
+
+  function handleBackClick() {
+    if (activeFolder?.id === root.id) return;
+    const newOpenFolderIds = [...openFolderIds];
+    newOpenFolderIds.pop();
+    setOpenFolderIds(newOpenFolderIds);
+    setActiveFolderId(newOpenFolderIds[newOpenFolderIds.length - 1]);
+  }
   return (
     <div className="flex items-end gap-8  p-3 border-b-[1px] border-b-blue-400/25 max-w-screen">
-      <button className="bg-neutral-900 h-7 w-7 rounded-md flex items-center justify-center">
+      <button
+        className="bg-neutral-900 h-7 w-7 rounded-md flex items-center justify-center"
+        onClick={handleBackClick}
+      >
         <IoIosArrowBack />
       </button>
       <span>{title}</span>
@@ -78,7 +96,7 @@ function FolderColumn({ id }: { id: string }) {
 }
 
 function FileDetails({ file }: { file: File }) {
-  const { root } = useFileContext();
+  // const { root } = useFileContext();
   return (
     <div className="p-4 flex flex-col justify-center items-center w-72">
       <FaFile size={80} />
@@ -86,7 +104,7 @@ function FileDetails({ file }: { file: File }) {
       <div className="w-full">
         <p>Kind: {file.kind}</p>
         <p>Size: {file.size}</p>
-        <p>Path: {getPathFromID(root, file.id)}</p>
+        {/* <p>Path: {getPathFromID(root, file.id)}</p> */}
         {/*TODO: Alogrithm to find the path*/}
         <p>Created: {new Date(file.createdAt).toLocaleString()}</p>
       </div>
@@ -134,7 +152,7 @@ function FileItem({ file }: { file: File | Folder }) {
     openFolderIds,
   } = useFileContext();
 
-  function handleClick(e: SyntheticEvent) {
+  function handleClick(e: SyntheticEvent<HTMLLIElement>) {
     e.stopPropagation();
     handleActiveChange(file.id);
     const depth = getDepthFromID(root, file.id);
