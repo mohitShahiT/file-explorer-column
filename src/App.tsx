@@ -46,14 +46,21 @@ function Title({ title }: { title: string }) {
   );
 }
 
-function FolderColumn({ id }: { folder?: Folder; id: string }) {
-  const { root, handleActiveChange } = useFileContext();
+function FolderColumn({ id }: { id: string }) {
+  const { root, handleActiveChange, openFolderIds, setOpenFolderIds } =
+    useFileContext();
   const folder = getFileFolderFromID(root, id);
   const isFolder = folder && "children" in folder;
+  function handleClick() {
+    if (!folder) return;
+    handleActiveChange(folder.id);
+    const curretDepth = openFolderIds.indexOf(id);
+    setOpenFolderIds(openFolderIds.slice(0, curretDepth + 1));
+  }
   return (
     <div
       className="border-r-[1px] border-r-blue-400/25 h-screen w-72"
-      onClick={() => folder && handleActiveChange(folder.id)}
+      onClick={handleClick}
     >
       {folder && (
         <>
@@ -101,6 +108,12 @@ function FileColumnHeader({ header }: { header: string }) {
 }
 
 function FileLists({ files }: { files: (File | Folder)[] }) {
+  if (files.length <= 0)
+    return (
+      <div className="text-center p-1 text-gray-500/50">
+        This folder is empty
+      </div>
+    );
   return (
     <div className="p-0.5">
       <ul className="flex flex-col gap-1">
@@ -133,12 +146,16 @@ function FileItem({ file }: { file: File | Folder }) {
     newIds[depth] = file.id;
     setOpenFolderIds(newIds);
   }
+  const activeBg =
+    activeFolderId === file.id
+      ? "bg-blue-600"
+      : openFolderIds.includes(file.id)
+      ? "bg-gray-700"
+      : "";
   return (
     <li
       onClick={handleClick}
-      className={`hover:bg-blue-600 py-1 flex justify-between items-center px-3 cursor-pointer rounded-sm ${
-        activeFolderId === file.id && "bg-blue-600"
-      }`}
+      className={`hover:bg-blue-600 py-1 flex justify-between items-center px-3 cursor-pointer rounded-sm ${activeBg}`}
     >
       <span className="flex items-center gap-2 ">
         {file.kind === FileKinds.Folder ? <FaFolder /> : <FaFile />}

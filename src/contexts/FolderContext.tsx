@@ -23,8 +23,8 @@ interface fileContextInterface {
 const FileContext = createContext<fileContextInterface | null>(null);
 
 export function FileContextProvider({ children }: { children: ReactNode }) {
-  const [openFolderIds, setOpenFolderIds] = useState([root.id]); //its index is important index based column
-  const [activeFolderId, setActiveFolderId] = useState<string>(root.id);
+  const [openFolderIds, setOpenFolderIds] = useState([root.id]); //its index is important, index decides on which column the list is shown
+  const [activeFolderId, setActiveFolderId] = useState<string>("");
 
   const activeFolder = useMemo(
     () => getFileFolderFromID(root, activeFolderId),
