@@ -1,19 +1,27 @@
 export enum FileKinds {
-    PDF,
-    Document,
-    JPG,
-    PNG,
-    Folder
+    PDF= "PDF",
+    Document = "Document",
+    JPG = "JPG",
+    PNG = "PNG",
+    Folder = "Folder",
+    MD = "MD",
+    Text = "Text",
+    XLSX = "XLSXs"
 }
 
-export interface File {
+export interface FileFolderBase {
     id: string,
     name: string,
-    kind: FileKinds,
-    size?: number, //in bytes.
+
     createdAt: number
 }
 
-export interface Folder extends File {
+export interface File extends FileFolderBase {
+    kind: Exclude<FileKinds, FileKinds.Folder>
+    size: number
+}
+
+export interface Folder extends FileFolderBase {
+    kind: FileKinds.Folder,
     children: Array<File | Folder>,
 }

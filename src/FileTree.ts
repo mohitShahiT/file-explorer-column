@@ -1,4 +1,5 @@
 import { Folder, FileKinds } from "./types/FileTypes";
+import { getDepthFromID } from "./utils";
 // import { nanoid } from "nanoid";
 
 // const ID_SIZE = 7;
@@ -19,7 +20,52 @@ export const root: Folder = {
           kind: FileKinds.Folder,
           name: "Projects",
           createdAt: Date.now(),
-          children: [],
+          children: [
+            {
+              id: "9",
+              kind: FileKinds.Folder,
+              name: "ReactApp",
+              createdAt: Date.now(),
+              children: [
+                {
+                  id: "11",
+                  kind: FileKinds.Folder,
+                  name: "src",
+                  createdAt: Date.now(),
+                  children: [
+                    {
+                      id: "12",
+                      kind: FileKinds.Text,
+                      name: "app.js",
+                      createdAt: Date.now(),
+                      size: 40,
+                    },
+                    {
+                      id: "13",
+                      kind: FileKinds.Text,
+                      name: "index.js",
+                      createdAt: Date.now(),
+                      size: 30,
+                    },
+                  ],
+                },
+                {
+                  id: "14",
+                  kind: FileKinds.Text,
+                  name: "package.json",
+                  createdAt: Date.now(),
+                  size: 30,
+                },
+              ],
+            },
+            {
+              id: "10",
+              kind: FileKinds.MD,
+              name: "project-plan.md",
+              createdAt: Date.now(),
+              size: 40,
+            },
+          ],
         },
         {
           id: "3",
@@ -53,7 +99,7 @@ export const root: Folder = {
     },
     {
       id: "7",
-      kind: FileKinds.Document,
+      kind: FileKinds.Text,
       name: "notes.txt",
       size: 10,
       createdAt: Date.now(),
@@ -67,3 +113,22 @@ export const root: Folder = {
     },
   ],
 };
+
+// //making the folder and files valid using BFS
+// function createFileTree(root: Folder){
+//   if(root.kind !== FileKinds.Folder) throw new Error("Root is not of folder kind!")
+//   if(!root.children) {
+//     root.children = []
+//   }
+
+//   const queue = [root]
+
+//   while(queue.length > 0) {
+//     const current:(Folder | File | undefined) = queue.shift()
+//     if(current) {
+//       if(current.kind === FileKinds.Folder && !current.children) current.children = []
+//       if(current.kind !== FileKinds.Folder && current.children)
+//     }
+//   }
+
+// }

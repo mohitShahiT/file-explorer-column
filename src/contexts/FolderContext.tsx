@@ -23,7 +23,7 @@ interface fileContextInterface {
 const FileContext = createContext<fileContextInterface | null>(null);
 
 export function FileContextProvider({ children }: { children: ReactNode }) {
-  const [openFolderIds, setOpenFolderIds] = useState([root.id]);
+  const [openFolderIds, setOpenFolderIds] = useState([root.id]); //its index is important index based column
   const [activeFolderId, setActiveFolderId] = useState<string>(root.id);
 
   const activeFolder = useMemo(
