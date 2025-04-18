@@ -1,12 +1,12 @@
 export enum FileKinds {
-    PDF= "PDF",
-    Document = "Document",
-    JPG = "JPG",
-    PNG = "PNG",
-    Folder = "Folder",
-    MD = "MD",
-    Text = "Text",
-    XLSX = "XLSXs"
+  PDF = "PDF",
+  Document = "Document",
+  JPG = "JPG",
+  PNG = "PNG",
+  Folder = "Folder",
+  MD = "MD",
+  Text = "Text",
+  XLSX = "XLSX",
 }
 
 export interface FileFolderBase {
@@ -23,4 +23,11 @@ export interface File extends FileFolderBase {
 export interface Folder extends FileFolderBase {
     kind: FileKinds.Folder,
     children: Array<File | Folder>,
+}
+
+export enum SortBy {
+  Name = "Name",
+  Size = "Size",
+  Created = "Created",
+  Type = "Type",
 }
