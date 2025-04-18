@@ -12,7 +12,7 @@ export function getFileFolderFromID(
     // console.log(current?.name)
     if (current?.id === id) return current;
     if (current && "children" in current) {
-      console.log(`Pushing ${current.name}'s children into the queue`);
+      // console.log(`Pushing ${current.name}'s children into the queue`);
       queue.push(...current.children);
     }
   }
@@ -69,4 +69,33 @@ export function calculateFolderSize(folder: Folder): number {
     }
   }
   return totalSize;
+}
+
+export function getRelativePath(root: Folder, id: string): string {
+  const queue: { folder: Folder; path: string }[] = [
+    //this queue only stores folder information
+    {
+      folder: root,
+      path: `/${root.name}`,
+    },
+  ];
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current) continue;
+    const { folder: currentFolder, path } = current;
+    if (currentFolder.id === id) return path; //this returns path for a folder
+    for (const child of currentFolder.children) {
+      //we only push folder and check for ids of other files
+      if (child.kind !== FileKinds.Folder && child.id === id) {
+        return path + "/" + child.name;
+      } else if (child.kind === FileKinds.Folder) {
+        queue.push({
+          folder: child,
+          path: path + "/" + child.name,
+        });
+      }
+    }
+  }
+  return "id not found";
 }
