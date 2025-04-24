@@ -11,7 +11,7 @@ export default function FileDetail({ file }: { file: File }) {
         <h1 className="m-5">{file.name}</h1>
         <div className="w-full">
           <p>Kind: {file.kind}</p>
-          <p>Size: {file.size}</p>
+          <p>Size: {file.size} KB</p>
           <p className="wrap-break-word ">
             Path: {getRelativePath(root, file.id)}
           </p>
