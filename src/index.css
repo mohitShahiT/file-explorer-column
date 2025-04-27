@@ -15,3 +15,16 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+
+.pulse {
+  animation: pulse-animation 1.5s;
+}
+
+@keyframes pulse-animation {
+  0% {
+    box-shadow: 0 0 0 0px rgba(33, 211, 20, 0.616);
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+  }
+}

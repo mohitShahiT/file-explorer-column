@@ -1,4 +1,3 @@
-import "./App.css";
 import FileExplorer from "./components/FileExplorer";
 function App() {
   return (
@@ -11,4 +10,3 @@ function App() {
 }
 
 export default App;
-

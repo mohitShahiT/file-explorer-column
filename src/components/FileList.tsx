@@ -33,6 +33,7 @@ function FileItem({ file }: { file: File | Folder }) {
     handleActiveChange,
     setOpenFolderIds,
     openFolderIds,
+    pulseId,
   } = useFileContext();
 
   function handleClick(e: SyntheticEvent<HTMLLIElement>) {
@@ -61,7 +62,11 @@ function FileItem({ file }: { file: File | Folder }) {
       transition={{ duration: 0.3 }}
     >
       <span className="flex items-center gap-2 ">
-        {file.kind === FileKinds.Folder ? <FaFolder /> : <FaFile />}
+        {file.kind === FileKinds.Folder ? (
+          <FaFolder className={`${pulseId === file.id && "pulse"}`} />
+        ) : (
+          <FaFile className={`${pulseId === file.id && "pulse"}`} />
+        )}
 
         {file.name}
       </span>

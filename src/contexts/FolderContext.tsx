@@ -18,6 +18,9 @@ interface fileContextInterface {
   setActiveFolderId: Dispatch<SetStateAction<string>>;
   activeFolder: Folder | File | null;
   handleActiveChange: (id: string) => void;
+  pulseId: string;
+  setPulseId: Dispatch<SetStateAction<string>>;
+  shouldPulse: (id: string) => boolean;
 }
 
 const FileContext = createContext<fileContextInterface | null>(null);
@@ -25,6 +28,7 @@ const FileContext = createContext<fileContextInterface | null>(null);
 export function FileContextProvider({ children }: { children: ReactNode }) {
   const [openFolderIds, setOpenFolderIds] = useState([root.id]); //its index is important, index(depth) decides on which column the list is shown
   const [activeFolderId, setActiveFolderId] = useState<string>(root.id);
+  const [pulseId, setPulseId] = useState(root.id);
 
   const activeFolder = useMemo(
     () => getFileFolderFromID(root, activeFolderId),
@@ -33,6 +37,11 @@ export function FileContextProvider({ children }: { children: ReactNode }) {
 
   function handleActiveChange(id: string) {
     setActiveFolderId(id);
+  }
+
+  function shouldPulse(id: string) {
+    if (id === activeFolderId) return true;
+    else return false;
   }
 
   return (
@@ -45,6 +54,9 @@ export function FileContextProvider({ children }: { children: ReactNode }) {
         setActiveFolderId,
         activeFolder,
         handleActiveChange,
+        pulseId,
+        setPulseId,
+        shouldPulse,
       }}
     >
       {children}

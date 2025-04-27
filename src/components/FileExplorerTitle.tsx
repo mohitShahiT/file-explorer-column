@@ -8,6 +8,7 @@ export default function FileExplorerTitle({ title }: { title: string }) {
     setOpenFolderIds,
     activeFolder,
     setActiveFolderId,
+    setPulseId,
   } = useFileContext();
 
   function handleBackClick() {
@@ -16,6 +17,7 @@ export default function FileExplorerTitle({ title }: { title: string }) {
     newOpenFolderIds.pop();
     setOpenFolderIds(newOpenFolderIds);
     setActiveFolderId(newOpenFolderIds[newOpenFolderIds.length - 1]);
+    setPulseId(newOpenFolderIds[newOpenFolderIds.length - 1]);
   }
   return (
     <div className="flex items-end gap-8  p-3 border-b-[1px] border-b-blue-400/25 max-w-screen">
