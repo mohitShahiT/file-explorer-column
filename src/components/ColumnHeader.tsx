@@ -28,7 +28,9 @@ export default function ColumnHeader({
         onChange={handleSelectChange}
       >
         {sortByValues.map((item) => (
-          <option value={item}>{item}</option>
+          <option value={item} key={item}>
+            {item}
+          </option>
         ))}
       </select>
     </div>

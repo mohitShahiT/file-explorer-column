@@ -60,7 +60,6 @@ function FileItem({ item, depth }: { item: ItemType; depth: number }) {
     .slice(0, depth + 1)
     .join("/")
     .concat(`/${item.name}`);
-  console.log(currentPath, activeFolders);
   const activeBg =
     currentPath === activeFolders.join("/")
       ? "bg-blue-600"
@@ -78,11 +77,7 @@ function FileItem({ item, depth }: { item: ItemType; depth: number }) {
       transition={{ duration: 0.3 }}
     >
       <span className="flex items-center gap-2 ">
-        {/* {file.kind === FileKinds.Folder ? (
-          <FaFolder className={`${pulseId === file.id && "pulse"}`} />
-        ) : (
-          <FaFile className={`${pulseId === file.id && "pulse"}`} />
-        )} */}
+        {item.isFolder ? <FaFolder /> : <FaFile />}
 
         {item.name}
       </span>

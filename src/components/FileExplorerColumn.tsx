@@ -119,7 +119,13 @@ export default function FileExplorerColumn({
   depth: number;
 }) {
   const [items, setItems] = useState<ItemType[]>([]);
+  const [isFolder, setIsFolder] = useState(true);
+  const [parentName, setParentName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [sortBy, setSortBy] = useState<SortBy>(SortBy.Type);
+  function handleSortByChange(newSortBy: SortBy) {
+    setSortBy(newSortBy);
+  }
   const path = pathArray.join("/");
   useEffect(
     function () {
@@ -129,8 +135,9 @@ export default function FileExplorerColumn({
           const url = `http://localhost:3000/api/folder?path=${path}`;
           const res = await fetch(url);
           const data = await res.json();
-          console.log(data);
           setItems(data.data.folder);
+          setIsFolder(data.data.isFolder);
+          setParentName(data.data.parent);
         } catch (err) {
           console.log(err);
         } finally {
@@ -143,6 +150,13 @@ export default function FileExplorerColumn({
   );
   return (
     <div className="border-r-[1px] border-r-blue-400/25 h-screen w-72">
+      {/* {isFolder && ( */}
+      <ColumnHeader
+        header={parentName}
+        sortBy={sortBy}
+        onSortByChange={handleSortByChange}
+      />
+      {/* // )} */}
       {isLoading ? (
         <div>Loading...</div>
       ) : (
