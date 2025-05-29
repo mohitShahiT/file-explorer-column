@@ -8,57 +8,56 @@ import { FileKinds, Folder, SortBy, File } from "../types/FileTypes";
 import { useMemo } from "react";
 import ItemList from "./FileList";
 import { ItemType } from "../types/FileTypes2";
+import { useItemContext } from "../contexts/ItemContext";
 
-// function sortChildren(folder: Folder, sortBy: SortBy): Folder {
-//   let sortedChildren = [...folder.children];
+function getSortedItem(items: ItemType[], sortBy: SortBy): ItemType[] {
+  let sortedItems = [...items];
 
-//   switch (sortBy) {
-//     case SortBy.Type: {
-//       const folderChildren: Folder[] = [];
-//       const fileChildren: File[] = [];
-//       sortedChildren.forEach((item) => {
-//         if (item.kind !== FileKinds.Folder) {
-//           fileChildren.push(item);
-//         } else {
-//           folderChildren.push(item);
-//         }
-//       });
-//       sortedChildren = [...folderChildren, ...fileChildren];
-//       break;
-//     }
-//     case SortBy.Name: {
-//       sortedChildren.sort((a, b) => a.name.localeCompare(b.name));
-//       break;
-//     }
-//     case SortBy.Created: {
-//       sortedChildren.sort((a, b) => a.createdAt - b.createdAt);
-//       break;
-//     }
-//     case SortBy.Size: {
-//       sortedChildren.sort((a, b) => {
-//         let aSize;
-//         let bSize;
-//         //if the child is file it already has size but for folder, it needs to be calculated dynamically
-//         if (a.kind !== FileKinds.Folder) {
-//           aSize = a.size;
-//         } else {
-//           aSize = calculateFolderSize(a);
-//         }
-//         if (b.kind !== FileKinds.Folder) {
-//           bSize = b.size;
-//         } else {
-//           bSize = calculateFolderSize(b);
-//         }
-//         return bSize - aSize;
-//       });
-//       break;
-//     }
-//   }
-//   return {
-//     ...folder,
-//     children: sortedChildren,
-//   };
-// }
+  switch (sortBy) {
+    case SortBy.Type: {
+      const files: ItemType[] = [];
+      const folders: ItemType[] = [];
+      sortedItems.forEach((item) => {
+        if (item.isFolder) {
+          folders.push(item);
+        } else {
+          files.push(item);
+        }
+      });
+      sortedItems = [...folders, ...files];
+      break;
+    }
+    case SortBy.Name: {
+      sortedItems.sort((a, b) => a.name.localeCompare(b.name));
+      break;
+    }
+    case SortBy.Created: {
+      sortedItems.sort((a, b) => a.createdAt - b.createdAt);
+      break;
+    }
+    //TODO: Get Folder Size from API
+    // case SortBy.Size: {
+    //   sortedItems.sort((a, b) => {
+    //     let aSize;
+    //     let bSize;
+    //     //if the child is file it already has size but for folder, it needs to be calculated dynamically
+    //     if (a.kind !== FileKinds.Folder) {
+    //       aSize = a.size;
+    //     } else {
+    //       aSize = calculateFolderSize(a);
+    //     }
+    //     if (b.kind !== FileKinds.Folder) {
+    //       bSize = b.size;
+    //     } else {
+    //       bSize = calculateFolderSize(b);
+    //     }
+    //     return bSize - aSize;
+    //   });
+    //   break;
+    // }
+  }
+  return sortedItems;
+}
 
 // export default function FileExplorerColumn({ id }: { id: string }) {
 //   const { root, handleActiveChange, openFolderIds, setOpenFolderIds } =
@@ -123,9 +122,16 @@ export default function FileExplorerColumn({
   const [parentName, setParentName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [sortBy, setSortBy] = useState<SortBy>(SortBy.Type);
+  const { activeFolders, setActiveFolders } = useItemContext();
+
   function handleSortByChange(newSortBy: SortBy) {
     setSortBy(newSortBy);
   }
+
+  useEffect(() => {
+    setItems(getSortedItem(items, sortBy));
+  }, [sortBy]);
+
   const path = pathArray.join("/");
   useEffect(
     function () {
@@ -149,13 +155,21 @@ export default function FileExplorerColumn({
     [path]
   );
   return (
-    <div className="border-r-[1px] border-r-blue-400/25 h-screen w-72">
+    <div
+      className="border-r-[1px] border-r-blue-400/25 h-screen w-72"
+      onClick={() => {
+        setActiveFolders([...activeFolders.slice(0, depth + 1)]);
+      }}
+    >
       {/* {isFolder && ( */}
       <ColumnHeader
         header={parentName}
         sortBy={sortBy}
         onSortByChange={handleSortByChange}
       />
+      <p>
+        {depth} {pathArray.join("/")}
+      </p>
       {/* // )} */}
       {isLoading ? (
         <div>Loading...</div>
