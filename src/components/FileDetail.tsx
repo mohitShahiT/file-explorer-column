@@ -1,7 +1,7 @@
 import { FaFile } from "react-icons/fa6";
 import { useFileContext } from "../contexts/FolderContext";
 import { getRelativePath } from "../utils";
-import { File } from "../types/FileTypes";
+import { File } from "../types/FileTypes2";
 
 export default function FileDetail({ file }: { file: File }) {
     const { root } = useFileContext();

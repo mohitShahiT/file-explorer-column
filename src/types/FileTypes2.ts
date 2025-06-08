@@ -34,3 +34,19 @@ export interface ItemType {
   kind?: string;
   isFolder: boolean;
 }
+
+export interface File {
+  id: string;
+  name: string;
+  createdAt: number;
+  size: number;
+  kind: string;
+  path: string;
+}
+
+export enum SortBy {
+  Name = "Name",
+  Size = "Size",
+  Created = "Created",
+  Type = "Type",
+}

@@ -1,11 +1,8 @@
-import { SyntheticEvent } from "react";
 import { FaFolder, FaFile } from "react-icons/fa6";
 import { IoIosArrowForward } from "react-icons/io";
-import { useFileContext } from "../contexts/FolderContext";
 import { ItemType } from "../types/FileTypes2";
-import { getDepthFromID } from "../utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { useItemContext } from "../contexts/ItemContext";
+import { ItemClick, useItemContext } from "../contexts/ItemContext";
 
 export default function ItemList({
   items,
@@ -14,18 +11,20 @@ export default function ItemList({
   items: ItemType[];
   depth: number;
 }) {
-  if (items.length <= 0)
+  if (items.length <= 0) {
     return (
       <div className="text-center p-1 text-gray-500/50">
         This folder is empty
       </div>
     );
+  }
+
   return (
     <div className="p-0.5">
       <ul className="flex flex-col gap-1">
         <AnimatePresence>
           {items.map((item) => (
-            <FileItem key={item.id} item={item} depth={depth} />
+            <Item key={item.id} item={item} depth={depth} />
           ))}
         </AnimatePresence>
       </ul>
@@ -33,7 +32,7 @@ export default function ItemList({
   );
 }
 
-function FileItem({ item, depth }: { item: ItemType; depth: number }) {
+function Item({ item, depth }: { item: ItemType; depth: number }) {
   // const {
   //   root,
   //   activeFolderId,
@@ -70,7 +69,14 @@ function FileItem({ item, depth }: { item: ItemType; depth: number }) {
     <motion.li
       onClick={(e) => {
         e.stopPropagation();
-        handleItemClick(item.name, depth);
+        const data: ItemClick = {
+          itemId: item.id,
+          itemName: item.name,
+          depth: depth,
+          isFolder: item.isFolder,
+        };
+        console.log({ data });
+        handleItemClick(data);
       }}
       className={`hover:bg-blue-600 py-1 flex justify-between items-center px-3 cursor-pointer rounded-sm ${activeBg}`}
       layout

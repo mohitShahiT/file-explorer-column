@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
-import { useFileContext } from "../contexts/FolderContext";
-import { calculateFolderSize, getFileFolderFromID } from "../utils";
+
 import ColumnHeader from "./ColumnHeader";
-import FileDetail from "./FileDetail";
-import FileLists from "./FileList";
-import { FileKinds, Folder, SortBy, File } from "../types/FileTypes";
-import { useMemo } from "react";
+import { SortBy, File } from "../types/FileTypes2";
 import ItemList from "./FileList";
 import { ItemType } from "../types/FileTypes2";
 import { useItemContext } from "../contexts/ItemContext";
+import { BASE_URL } from "../constants";
+import FileDetail from "./FileDetail";
 
 function getSortedItem(items: ItemType[], sortBy: SortBy): ItemType[] {
   let sortedItems = [...items];
@@ -109,59 +107,78 @@ function getSortedItem(items: ItemType[], sortBy: SortBy): ItemType[] {
 //     </div>
 //   );
 // }
-
 export default function FileExplorerColumn({
   pathArray,
   depth,
+  activeFileId,
 }: {
   pathArray: string[];
   depth: number;
+  activeFileId: string | null;
 }) {
   const [items, setItems] = useState<ItemType[]>([]);
-  const [isFolder, setIsFolder] = useState(true);
-  const [parentName, setParentName] = useState("");
+  const [fileItem, setFileItem] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [parentName, setParentName] = useState("");
   const [sortBy, setSortBy] = useState<SortBy>(SortBy.Type);
-  const { activeFolders, setActiveFolders } = useItemContext();
+  const { activeFolders, setActiveFolders, setFolderDepth, setActiveFileId } =
+    useItemContext();
 
   function handleSortByChange(newSortBy: SortBy) {
     setSortBy(newSortBy);
   }
-
   useEffect(() => {
     setItems(getSortedItem(items, sortBy));
   }, [sortBy]);
 
   const path = pathArray.join("/");
-  useEffect(
-    function () {
-      async function loadData() {
-        try {
-          setIsLoading(true);
-          const url = `http://localhost:3000/api/folder?path=${path}`;
-          const res = await fetch(url);
-          const data = await res.json();
-          setItems(data.data.folder);
-          setIsFolder(data.data.isFolder);
-          setParentName(data.data.parent);
-        } catch (err) {
-          console.log(err);
-        } finally {
-          setIsLoading(false);
-        }
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const url = `${BASE_URL}/api/folder?path=${path}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        setItems(data.data.folder);
+        setParentName(data.data.parent);
+      } catch (err) {
+        console.log(err);
+      } finally {
+        setIsLoading(false);
+        setFileItem(null);
       }
-      loadData();
-    },
-    [path]
-  );
+    }
+    loadData();
+  }, [path]);
+
+  useEffect(() => {
+    async function fetchFileItem() {
+      try {
+        const url = `${BASE_URL}/api/file/${activeFileId}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const { file } = data.data;
+        const clickedFile: File = {
+          ...file,
+          path: [...activeFolders, file.name].join("/"),
+        };
+        setFileItem(clickedFile);
+      } catch (err) {
+        console.log(err);
+        throw new Error("Something went wrong");
+      }
+    }
+    if (activeFileId) fetchFileItem();
+  }, [activeFileId]);
   return (
     <div
       className="border-r-[1px] border-r-blue-400/25 h-screen w-72"
       onClick={() => {
         setActiveFolders([...activeFolders.slice(0, depth + 1)]);
+        setFolderDepth(depth);
+        setActiveFileId(null);
       }}
     >
-      {/* {isFolder && ( */}
       <ColumnHeader
         header={parentName}
         sortBy={sortBy}
@@ -170,9 +187,11 @@ export default function FileExplorerColumn({
       <p>
         {depth} {pathArray.join("/")}
       </p>
-      {/* // )} */}
+
       {isLoading ? (
         <div>Loading...</div>
+      ) : fileItem ? (
+        <FileDetail file={fileItem} />
       ) : (
         <ItemList items={items} depth={depth} />
       )}

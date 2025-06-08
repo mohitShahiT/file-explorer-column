@@ -8,22 +8,59 @@ import {
 } from "react";
 
 interface ItemContexType {
+  activeFileId: string | null;
   activeFolders: string[];
   setActiveFolders: Dispatch<SetStateAction<string[]>>;
-  handleItemClick: (name: string, depth: number) => void;
+  handleItemClick: (param: ItemClick) => void;
+  folderDepth: number;
+  setFolderDepth: Dispatch<SetStateAction<number>>;
+  setActiveFileId: Dispatch<SetStateAction<string | null>>;
 }
 
 const ItemContext = createContext<ItemContexType | null>(null);
 
+export interface ItemClick {
+  itemId: string;
+  itemName: string;
+  depth: number;
+  isFolder: boolean;
+}
+
 export function ItemContextProvider({ children }: { children: ReactNode }) {
-  const [activeFolders, setActiveFolders] = useState(["root"]);
-  function handleItemClick(name: string, depth: number) {
-    console.log([...activeFolders.slice(0, depth + 1), name]);
-    setActiveFolders([...activeFolders.slice(0, depth + 1), name]);
+  const [activeFolders, setActiveFolders] = useState<string[]>(["root"]);
+  const [activeFileId, setActiveFileId] = useState<string | null>(null);
+  const [folderDepth, setFolderDepth] = useState(0);
+
+  async function handleItemClick({
+    itemId,
+    itemName,
+    depth,
+    isFolder,
+  }: ItemClick) {
+    console.log([...activeFolders.slice(0, depth + 1), itemName]);
+    //Increase the depth on each item click
+    setFolderDepth(depth + 1);
+    //Clicked Item is folder type
+    if (isFolder) {
+      setActiveFolders([...activeFolders.slice(0, depth + 1), itemName]);
+      setActiveFileId(null);
+    }
+    //Clicked Item is file type
+    else {
+      setActiveFileId(itemId);
+    }
   }
   return (
     <ItemContext.Provider
-      value={{ activeFolders, setActiveFolders, handleItemClick }}
+      value={{
+        activeFileId,
+        activeFolders,
+        setActiveFolders,
+        handleItemClick,
+        folderDepth,
+        setFolderDepth,
+        setActiveFileId,
+      }}
     >
       {children}
     </ItemContext.Provider>
