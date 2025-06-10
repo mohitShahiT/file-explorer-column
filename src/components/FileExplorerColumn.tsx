@@ -7,6 +7,7 @@ import { ItemType } from "../types/FileTypes2";
 import { useItemContext } from "../contexts/ItemContext";
 import { BASE_URL } from "../constants";
 import FileDetail from "./FileDetail";
+import { useQuery } from "react-query";
 
 function getSortedItem(items: ItemType[], sortBy: SortBy): ItemType[] {
   let sortedItems = [...items];
@@ -107,6 +108,16 @@ function getSortedItem(items: ItemType[], sortBy: SortBy): ItemType[] {
 //     </div>
 //   );
 // }
+
+type QueryKeyyy = [string, string[]];
+
+async function fetchFolder({ queryKey }: { queryKey: QueryKeyyy }) {
+  const [, pathArray] = queryKey;
+  const url = `${BASE_URL}/api/folder?path=${pathArray.join("/")}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  return data.data;
+}
 export default function FileExplorerColumn({
   pathArray,
   depth,
@@ -131,12 +142,12 @@ export default function FileExplorerColumn({
     setItems(getSortedItem(items, sortBy));
   }, [sortBy]);
 
-  const path = pathArray.join("/");
-
+  // TODO: Type compatible
+  // const { folder: items } = useQuery(["folder", pathArray], fetchFolder, {});
   useEffect(() => {
     async function loadData() {
       try {
-        const url = `${BASE_URL}/api/folder?path=${path}`;
+        const url = `${BASE_URL}/api/folder?path=${pathArray.join("/")}`;
         const res = await fetch(url);
         const data = await res.json();
         setItems(data.data.folder);
@@ -148,12 +159,14 @@ export default function FileExplorerColumn({
         setFileItem(null);
       }
     }
-    loadData();
-  }, [path]);
+    console.log("calling for pathArray: ", pathArray);
+    if (!activeFileId) loadData();
+  }, [pathArray]);
 
   useEffect(() => {
     async function fetchFileItem() {
       try {
+        setIsLoading(true);
         const url = `${BASE_URL}/api/file/${activeFileId}`;
         const res = await fetch(url);
         const data = await res.json();
@@ -166,10 +179,12 @@ export default function FileExplorerColumn({
       } catch (err) {
         console.log(err);
         throw new Error("Something went wrong");
+      } finally {
+        setIsLoading(false);
       }
     }
     if (activeFileId) fetchFileItem();
-  }, [activeFileId]);
+  }, [activeFileId, activeFolders]);
   return (
     <div
       className="border-r-[1px] border-r-blue-400/25 h-screen w-72"
