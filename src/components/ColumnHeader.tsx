@@ -3,7 +3,7 @@ import { SortBy } from "../types/FileTypes";
 const sortByValues = Object.values(SortBy);
 
 export default function ColumnHeader({
-  header,
+  header = "hele",
   sortBy,
   onSortByChange,
 }: {

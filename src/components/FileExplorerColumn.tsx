@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 
 import ColumnHeader from "./ColumnHeader";
-import { SortBy, File } from "../types/FileTypes2";
+import { SortBy } from "../types/FileTypes2";
 import ItemList from "./FileList";
 import { ItemType } from "../types/FileTypes2";
 import { useItemContext } from "../contexts/ItemContext";
@@ -58,62 +58,15 @@ function getSortedItem(items: ItemType[], sortBy: SortBy): ItemType[] {
   return sortedItems;
 }
 
-// export default function FileExplorerColumn({ id }: { id: string }) {
-//   const { root, handleActiveChange, openFolderIds, setOpenFolderIds } =
-//     useFileContext();
-//   const [sortBy, setSortBy] = useState<SortBy>(SortBy.Type);
-
-//   const folder = useMemo(() => {
-//     let tempFileFolder = getFileFolderFromID(root, id);
-//     if (tempFileFolder?.kind === FileKinds.Folder) {
-//       tempFileFolder = sortChildren(tempFileFolder, sortBy);
-//     }
-//     return tempFileFolder;
-//   }, [root, id, sortBy]);
-//   const isFolder = folder && "children" in folder;
-
-//   function handleClick() {
-//     if (!folder) return;
-//     handleActiveChange(folder.id);
-//     const curretDepth = openFolderIds.indexOf(id);
-//     setOpenFolderIds(openFolderIds.slice(0, curretDepth + 1));
-//   }
-
-//   function handleSortByChange(newSortBy: SortBy) {
-//     setSortBy(newSortBy);
-//   }
-
-//   return (
-//     <div
-//       className="border-r-[1px] border-r-blue-400/25 h-screen w-72"
-//       onClick={handleClick}
-//     >
-//       {folder && (
-//         <>
-//           {isFolder && (
-//             <ColumnHeader
-//               header={folder.name}
-//               sortBy={sortBy}
-//               onSortByChange={handleSortByChange}
-//             />
-//           )}
-
-//           {isFolder ? (
-//             <FileLists files={folder.children} />
-//           ) : (
-//             <FileDetail file={folder} />
-//           )}
-//         </>
-//       )}
-//     </div>
-//   );
-// }
-
-type QueryKeyyy = [string, string[]];
-
-async function fetchFolder({ queryKey }: { queryKey: QueryKeyyy }) {
-  const [, pathArray] = queryKey;
-  const url = `${BASE_URL}/api/folder?path=${pathArray.join("/")}`;
+async function fetchFolder(path: string) {
+  const url = `${BASE_URL}/api/folder?path=${path}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  return data.data;
+}
+async function fetchFile(id: string | null) {
+  if (!id) return null;
+  const url = `${BASE_URL}/api/file/${id}`;
   const res = await fetch(url);
   const data = await res.json();
   return data.data;
@@ -127,10 +80,6 @@ export default function FileExplorerColumn({
   depth: number;
   activeFileId: string | null;
 }) {
-  const [items, setItems] = useState<ItemType[]>([]);
-  const [fileItem, setFileItem] = useState<File | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [parentName, setParentName] = useState("");
   const [sortBy, setSortBy] = useState<SortBy>(SortBy.Type);
   const { activeFolders, setActiveFolders, setFolderDepth, setActiveFileId } =
     useItemContext();
@@ -138,53 +87,23 @@ export default function FileExplorerColumn({
   function handleSortByChange(newSortBy: SortBy) {
     setSortBy(newSortBy);
   }
-  useEffect(() => {
-    setItems(getSortedItem(items, sortBy));
-  }, [sortBy]);
 
-  // TODO: Type compatible
-  // const { folder: items } = useQuery(["folder", pathArray], fetchFolder, {});
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const url = `${BASE_URL}/api/folder?path=${pathArray.join("/")}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        setItems(data.data.folder);
-        setParentName(data.data.parent);
-      } catch (err) {
-        console.log(err);
-      } finally {
-        setIsLoading(false);
-        setFileItem(null);
-      }
-    }
-    console.log("calling for pathArray: ", pathArray);
-    if (!activeFileId) loadData();
-  }, [pathArray]);
+  const path = pathArray.join("/");
+  const { data: folderData, isLoading: isFolderItemsLoading } = useQuery(
+    ["folder", path],
+    () => fetchFolder(path)
+  );
 
-  useEffect(() => {
-    async function fetchFileItem() {
-      try {
-        setIsLoading(true);
-        const url = `${BASE_URL}/api/file/${activeFileId}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        const { file } = data.data;
-        const clickedFile: File = {
-          ...file,
-          path: [...activeFolders, file.name].join("/"),
-        };
-        setFileItem(clickedFile);
-      } catch (err) {
-        console.log(err);
-        throw new Error("Something went wrong");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    if (activeFileId) fetchFileItem();
-  }, [activeFileId, activeFolders]);
+  const { data: fileData, isLoading: isFileItemLoading } = useQuery(
+    ["file", activeFileId],
+    () => fetchFile(activeFileId)
+  );
+
+  const sortedItems = useMemo(
+    () => getSortedItem(folderData?.folder ?? [], sortBy),
+    [folderData, sortBy]
+  );
+
   return (
     <div
       className="border-r-[1px] border-r-blue-400/25 h-screen w-72"
@@ -194,21 +113,20 @@ export default function FileExplorerColumn({
         setActiveFileId(null);
       }}
     >
-      <ColumnHeader
-        header={parentName}
-        sortBy={sortBy}
-        onSortByChange={handleSortByChange}
-      />
-      <p>
-        {depth} {pathArray.join("/")}
-      </p>
+      {!fileData && (
+        <ColumnHeader
+          header={folderData?.parent}
+          sortBy={sortBy}
+          onSortByChange={handleSortByChange}
+        />
+      )}
 
-      {isLoading ? (
+      {isFileItemLoading || isFolderItemsLoading ? (
         <div>Loading...</div>
-      ) : fileItem ? (
-        <FileDetail file={fileItem} />
+      ) : fileData ? (
+        <FileDetail file={fileData.file} />
       ) : (
-        <ItemList items={items} depth={depth} />
+        <ItemList items={sortedItems} depth={depth} />
       )}
     </div>
   );
