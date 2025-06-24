@@ -37,10 +37,8 @@ export function ItemContextProvider({ children }: { children: ReactNode }) {
     depth,
     isFolder,
   }: ItemClick) {
-    console.log([...activeFolders.slice(0, depth + 1), itemName]);
     //Increase the depth on each item click
-    setFolderDepth(depth + 1);
-    //Clicked Item is folder type
+    setFolderDepth(depth + 1); //Clicked Item is folder type
     if (isFolder) {
       setActiveFolders([...activeFolders.slice(0, depth + 1), itemName]);
       setActiveFileId(null);

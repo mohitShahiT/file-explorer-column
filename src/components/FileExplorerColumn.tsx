@@ -5,9 +5,10 @@ import { SortBy } from "../types/FileTypes2";
 import ItemList from "./FileList";
 import { ItemType } from "../types/FileTypes2";
 import { useItemContext } from "../contexts/ItemContext";
-import { BASE_URL } from "../constants";
 import FileDetail from "./FileDetail";
 import { useQuery } from "react-query";
+import { fetchFile, fetchFolder } from "../api/items";
+import ContextMenue from "./ContextMenue";
 
 function getSortedItem(items: ItemType[], sortBy: SortBy): ItemType[] {
   let sortedItems = [...items];
@@ -58,19 +59,6 @@ function getSortedItem(items: ItemType[], sortBy: SortBy): ItemType[] {
   return sortedItems;
 }
 
-async function fetchFolder(path: string) {
-  const url = `${BASE_URL}/api/folder?path=${path}`;
-  const res = await fetch(url);
-  const data = await res.json();
-  return data.data;
-}
-async function fetchFile(id: string | null) {
-  if (!id) return null;
-  const url = `${BASE_URL}/api/file/${id}`;
-  const res = await fetch(url);
-  const data = await res.json();
-  return data.data;
-}
 export default function FileExplorerColumn({
   pathArray,
   depth,
@@ -83,9 +71,17 @@ export default function FileExplorerColumn({
   const [sortBy, setSortBy] = useState<SortBy>(SortBy.Type);
   const { activeFolders, setActiveFolders, setFolderDepth, setActiveFileId } =
     useItemContext();
+  const [menuPosition, setMenuPosition] = useState<{
+    positionX: number;
+    positionY: number;
+  } | null>(null);
 
   function handleSortByChange(newSortBy: SortBy) {
     setSortBy(newSortBy);
+  }
+  function handleRightClick(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+    e.preventDefault();
+    setMenuPosition({ positionX: e.clientX, positionY: e.clientY });
   }
 
   const path = pathArray.join("/");
@@ -108,10 +104,13 @@ export default function FileExplorerColumn({
     <div
       className="border-r-[1px] border-r-blue-400/25 h-screen w-72"
       onClick={() => {
+        setMenuPosition(null);
+        if (activeFileId) return;
         setActiveFolders([...activeFolders.slice(0, depth + 1)]);
         setFolderDepth(depth);
         setActiveFileId(null);
       }}
+      onContextMenu={handleRightClick}
     >
       {!fileData && (
         <ColumnHeader
@@ -127,6 +126,12 @@ export default function FileExplorerColumn({
         <FileDetail file={fileData.file} />
       ) : (
         <ItemList items={sortedItems} depth={depth} />
+      )}
+      {menuPosition && (
+        <ContextMenue
+          positionX={menuPosition.positionX}
+          positionY={menuPosition.positionY}
+        />
       )}
     </div>
   );

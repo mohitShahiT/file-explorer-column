@@ -3,6 +3,8 @@ import { IoIosArrowForward } from "react-icons/io";
 import { ItemType } from "../types/FileTypes2";
 import { motion, AnimatePresence } from "framer-motion";
 import { ItemClick, useItemContext } from "../contexts/ItemContext";
+import { fetchFile } from "../api/items";
+import { useQuery } from "react-query";
 
 export default function ItemList({
   items,
@@ -33,36 +35,22 @@ export default function ItemList({
 }
 
 function Item({ item, depth }: { item: ItemType; depth: number }) {
-  // const {
-  //   root,
-  //   activeFolderId,
-  //   handleActiveChange,
-  //   setOpenFolderIds,
-  //   openFolderIds,
-  //   pulseId,
-  // } = useFileContext();
-
-  // function handleClick(e: SyntheticEvent<HTMLLIElement>) {
-  //   e.stopPropagation();
-  //   handleActiveChange(file.id);
-  //   const depth = getDepthFromID(root, file.id);
-  //   let newIds = [...openFolderIds];
-  //   if (depth < openFolderIds.length) {
-  //     //if currently open depth then remove further open column up to that depth and then only push new column
-  //     newIds = openFolderIds.slice(0, depth);
-  //   }
-  //   newIds[depth] = file.id;
-  //   setOpenFolderIds(newIds);
-  // }
-  const { activeFolders, handleItemClick } = useItemContext();
+  const { activeFolders, handleItemClick, activeFileId } = useItemContext();
   const currentPath = activeFolders
     .slice(0, depth + 1)
     .join("/")
     .concat(`/${item.name}`);
+  let activeFolderPath = activeFolders.join("/");
+  const { data: fileData } = useQuery(["file", activeFileId], () =>
+    fetchFile(activeFileId)
+  );
+  if (activeFileId && fileData) {
+    activeFolderPath = activeFolderPath.concat(`/${fileData.file.name}`);
+  }
   const activeBg =
-    currentPath === activeFolders.join("/")
+    currentPath === activeFolderPath
       ? "bg-blue-600"
-      : activeFolders.join("/").startsWith(currentPath)
+      : activeFolderPath.startsWith(currentPath)
       ? "bg-gray-700"
       : "";
   return (
@@ -75,19 +63,19 @@ function Item({ item, depth }: { item: ItemType; depth: number }) {
           depth: depth,
           isFolder: item.isFolder,
         };
-        console.log({ data });
         handleItemClick(data);
       }}
       className={`hover:bg-blue-600 py-1 flex justify-between items-center px-3 cursor-pointer rounded-sm ${activeBg}`}
       layout
       transition={{ duration: 0.3 }}
     >
-      <span className="flex items-center gap-2 ">
-        {item.isFolder ? <FaFolder /> : <FaFile />}
-
-        {item.name}
-      </span>
-      {item.isFolder && <IoIosArrowForward />}
+      <div className="flex w-full items-center justify-between gap-2 ">
+        <div className="flex items-center gap-3.5">
+          {item.isFolder ? <FaFolder /> : <FaFile />}
+          <span>{item.name}</span>
+        </div>
+        {item.isFolder && <IoIosArrowForward />}
+      </div>
     </motion.li>
   );
 }
