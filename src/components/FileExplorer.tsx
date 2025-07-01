@@ -17,7 +17,7 @@ export default function FileExplorer() {
   }
   return (
     <>
-      <div className="p-2 ">
+      <div className="p-2">
         <FileExplorerTitle title={activeFolders[activeFolders.length - 1]} />
         <div className="flex overflow-scroll">{Columns}</div>
       </div>

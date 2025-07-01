@@ -5,9 +5,7 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <div>
-        <FileExplorer />
-      </div>
+      <FileExplorer />
       <ReactQueryDevtools />
     </QueryClientProvider>
   );

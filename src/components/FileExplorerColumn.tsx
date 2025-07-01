@@ -8,7 +8,8 @@ import { useItemContext } from "../contexts/ItemContext";
 import FileDetail from "./FileDetail";
 import { useQuery } from "react-query";
 import { fetchFile, fetchFolder } from "../api/items";
-import ContextMenue from "./ContextMenue";
+import ContextMenue from "./ContextMenu";
+import { useContextMenuContext } from "../contexts/ContextMenuContext";
 
 function getSortedItem(items: ItemType[], sortBy: SortBy): ItemType[] {
   let sortedItems = [...items];
@@ -71,10 +72,7 @@ export default function FileExplorerColumn({
   const [sortBy, setSortBy] = useState<SortBy>(SortBy.Type);
   const { activeFolders, setActiveFolders, setFolderDepth, setActiveFileId } =
     useItemContext();
-  const [menuPosition, setMenuPosition] = useState<{
-    positionX: number;
-    positionY: number;
-  } | null>(null);
+  const { menuPosition, setMenuPosition } = useContextMenuContext();
 
   function handleSortByChange(newSortBy: SortBy) {
     setSortBy(newSortBy);
