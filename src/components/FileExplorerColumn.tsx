@@ -1,109 +1,135 @@
-import { useState } from "react";
-import { useFileContext } from "../contexts/FolderContext";
-import { calculateFolderSize, getFileFolderFromID } from "../utils";
-import ColumnHeader from "./ColumnHeader";
-import FileDetail from "./FileDetail";
-import FileLists from "./FileList";
-import { FileKinds, Folder, SortBy, File } from "../types/FileTypes";
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 
-function sortChildren(folder: Folder, sortBy: SortBy): Folder {
-  let sortedChildren = [...folder.children];
+import ColumnHeader from "./ColumnHeader";
+import { SortBy } from "../types/FileTypes2";
+import ItemList from "./FileList";
+import { ItemType } from "../types/FileTypes2";
+import { useItemContext } from "../contexts/ItemContext";
+import FileDetail from "./FileDetail";
+import { useQuery } from "react-query";
+import { fetchFile, fetchFolder } from "../api/items";
+import ContextMenue from "./ContextMenu";
+import { useContextMenuContext } from "../contexts/ContextMenuContext";
+
+function getSortedItem(items: ItemType[], sortBy: SortBy): ItemType[] {
+  let sortedItems = [...items];
 
   switch (sortBy) {
     case SortBy.Type: {
-      const folderChildren: Folder[] = [];
-      const fileChildren: File[] = [];
-      sortedChildren.forEach((item) => {
-        if (item.kind !== FileKinds.Folder) {
-          fileChildren.push(item);
+      const files: ItemType[] = [];
+      const folders: ItemType[] = [];
+      sortedItems.forEach((item) => {
+        if (item.isFolder) {
+          folders.push(item);
         } else {
-          folderChildren.push(item);
+          files.push(item);
         }
       });
-      sortedChildren = [...folderChildren, ...fileChildren];
+      sortedItems = [...folders, ...files];
       break;
     }
     case SortBy.Name: {
-      sortedChildren.sort((a, b) => a.name.localeCompare(b.name));
+      sortedItems.sort((a, b) => a.name.localeCompare(b.name));
       break;
     }
     case SortBy.Created: {
-      sortedChildren.sort((a, b) => a.createdAt - b.createdAt);
+      sortedItems.sort((a, b) => a.createdAt - b.createdAt);
       break;
     }
-    case SortBy.Size: {
-      sortedChildren.sort((a, b) => {
-        let aSize;
-        let bSize;
-        //if the child is file it already has size but for folder, it needs to be calculated dynamically
-        if (a.kind !== FileKinds.Folder) {
-          aSize = a.size;
-        } else {
-          aSize = calculateFolderSize(a);
-        }
-        if (b.kind !== FileKinds.Folder) {
-          bSize = b.size;
-        } else {
-          bSize = calculateFolderSize(b);
-        }
-        return bSize - aSize;
-      });
-      break;
-    }
+    //TODO: Get Folder Size from API
+    // case SortBy.Size: {
+    //   sortedItems.sort((a, b) => {
+    //     let aSize;
+    //     let bSize;
+    //     //if the child is file it already has size but for folder, it needs to be calculated dynamically
+    //     if (a.kind !== FileKinds.Folder) {
+    //       aSize = a.size;
+    //     } else {
+    //       aSize = calculateFolderSize(a);
+    //     }
+    //     if (b.kind !== FileKinds.Folder) {
+    //       bSize = b.size;
+    //     } else {
+    //       bSize = calculateFolderSize(b);
+    //     }
+    //     return bSize - aSize;
+    //   });
+    //   break;
+    // }
   }
-  return {
-    ...folder,
-    children: sortedChildren,
-  };
+  return sortedItems;
 }
 
-export default function FileExplorerColumn({ id }: { id: string }) {
-  const { root, handleActiveChange, openFolderIds, setOpenFolderIds } =
-    useFileContext();
+export default function FileExplorerColumn({
+  pathArray,
+  depth,
+  activeFileId,
+}: {
+  pathArray: string[];
+  depth: number;
+  activeFileId: string | null;
+}) {
   const [sortBy, setSortBy] = useState<SortBy>(SortBy.Type);
-
-  const folder = useMemo(() => {
-    let tempFileFolder = getFileFolderFromID(root, id);
-    if (tempFileFolder?.kind === FileKinds.Folder) {
-      tempFileFolder = sortChildren(tempFileFolder, sortBy);
-    }
-    return tempFileFolder;
-  }, [root, id, sortBy]);
-  const isFolder = folder && "children" in folder;
-
-  function handleClick() {
-    if (!folder) return;
-    handleActiveChange(folder.id);
-    const curretDepth = openFolderIds.indexOf(id);
-    setOpenFolderIds(openFolderIds.slice(0, curretDepth + 1));
-  }
+  const { activeFolders, setActiveFolders, setFolderDepth, setActiveFileId } =
+    useItemContext();
+  const { menuPosition, setMenuPosition } = useContextMenuContext();
 
   function handleSortByChange(newSortBy: SortBy) {
     setSortBy(newSortBy);
   }
+  function handleRightClick(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+    e.preventDefault();
+    setMenuPosition({ positionX: e.clientX, positionY: e.clientY });
+  }
+
+  const path = pathArray.join("/");
+  const { data: folderData, isLoading: isFolderItemsLoading } = useQuery(
+    ["folder", path],
+    () => fetchFolder(path)
+  );
+
+  const { data: fileData, isLoading: isFileItemLoading } = useQuery(
+    ["file", activeFileId],
+    () => fetchFile(activeFileId)
+  );
+
+  const sortedItems = useMemo(
+    () => getSortedItem(folderData?.folder ?? [], sortBy),
+    [folderData, sortBy]
+  );
 
   return (
     <div
       className="border-r-[1px] border-r-blue-400/25 h-screen w-72"
-      onClick={handleClick}
+      onClick={() => {
+        setMenuPosition(null);
+        if (activeFileId) return;
+        setActiveFolders([...activeFolders.slice(0, depth + 1)]);
+        setFolderDepth(depth);
+        setActiveFileId(null);
+      }}
+      onContextMenu={handleRightClick}
     >
-      {folder && (
-        <>
-          {isFolder && (
-            <ColumnHeader
-              header={folder.name}
-              sortBy={sortBy}
-              onSortByChange={handleSortByChange}
-            />
-          )}
+      {!fileData && (
+        <ColumnHeader
+          header={folderData?.parent}
+          sortBy={sortBy}
+          onSortByChange={handleSortByChange}
+        />
+      )}
 
-          {isFolder ? (
-            <FileLists files={folder.children} />
-          ) : (
-            <FileDetail file={folder} />
-          )}
-        </>
+      {isFileItemLoading || isFolderItemsLoading ? (
+        <div>Loading...</div>
+      ) : fileData ? (
+        <FileDetail file={fileData.file} />
+      ) : (
+        <ItemList items={sortedItems} depth={depth} />
+      )}
+      {menuPosition && (
+        <ContextMenue
+          positionX={menuPosition.positionX}
+          positionY={menuPosition.positionY}
+        />
       )}
     </div>
   );

@@ -3,7 +3,7 @@ import { SortBy } from "../types/FileTypes";
 const sortByValues = Object.values(SortBy);
 
 export default function ColumnHeader({
-  header,
+  header = "hele",
   sortBy,
   onSortByChange,
 }: {
@@ -28,7 +28,9 @@ export default function ColumnHeader({
         onChange={handleSelectChange}
       >
         {sortByValues.map((item) => (
-          <option value={item}>{item}</option>
+          <option value={item} key={item}>
+            {item}
+          </option>
         ))}
       </select>
     </div>
